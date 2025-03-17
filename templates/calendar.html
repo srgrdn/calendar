@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Календарь графика 2/2</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .calendar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .month-card {
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .month-header {
+            background-color: #6c757d;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+        }
+        th {
+            text-align: center;
+            padding: 0.75rem;
+            background-color: #e9ecef;
+        }
+        td {
+            text-align: center;
+            padding: 0.75rem;
+            width: 14.28%;
+            height: 60px;
+            position: relative;
+        }
+        .empty {
+            background-color: #f8f9fa;
+        }
+        .work {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .off {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .today {
+            font-weight: bold;
+            position: relative;
+        }
+        .today::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+        .legend {
+            margin-bottom: 2rem;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 1.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+        .work-legend {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .off-legend {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .day-number {
+            font-size: 1.2rem;
+        }
+        .header-title {
+            margin-bottom: 1.5rem;
+        }
+        .date-selector {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .navigation-buttons {
+            margin-top: 1rem;
+        }
+        @media (max-width: 768px) {
+            td {
+                height: 50px;
+                padding: 0.5rem;
+            }
+            .day-number {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container calendar-container">
+        <div class="text-center header-title">
+            <h1 class="display-4">Календарь графика работы 2/2</h1>
+            <p class="lead text-muted">Начало цикла: {{ start_date.strftime('%d.%m.%Y') }}</p>
+        </div>
+        
+        <div class="date-selector">
+            <form id="date-form" method="get" action="/" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="month" class="form-label">Месяц</label>
+                    <select class="form-select" id="month" name="month">
+                        {% for month_num, month_name in months %}
+                        <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>{{ month_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="year" class="form-label">Год</label>
+                    <select class="form-select" id="year" name="year">
+                        {% for year in years %}
+                        <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Показать</button>
+                </div>
+            </form>
+            
+            <div class="navigation-buttons row">
+                <div class="col-md-6">
+                    <button id="prev-month" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-chevron-left"></i> Предыдущий месяц
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <button id="next-month" class="btn btn-outline-secondary w-100">
+                        Следующий месяц <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center legend">
+            <div class="col-auto">
+                <div class="legend-item work-legend">
+                    <i class="fas fa-briefcase me-2"></i> Рабочие дни
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="legend-item off-legend">
+                    <i class="fas fa-home me-2"></i> Выходные дни
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for month_data in calendar_data %}
+            <div class="col-md-4">
+                <div class="card month-card">
+                    <div class="month-header">
+                        {{ month_data.month }} {{ month_data.year }}
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Пн</th>
+                                    <th>Вт</th>
+                                    <th>Ср</th>
+                                    <th>Чт</th>
+                                    <th>Пт</th>
+                                    <th>Сб</th>
+                                    <th>Вс</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for week in month_data.weeks %}
+                                <tr>
+                                    {% for day in week %}
+                                    <td class="{{ day.status }} {% if day.today %}today{% endif %}">
+                                        {% if day.day %}
+                                        <div class="day-number">{{ day.day }}</div>
+                                        {% if day.status == "work" %}
+                                        <small><i class="fas fa-briefcase"></i></small>
+                                        {% elif day.status == "off" %}
+                                        <small><i class="fas fa-home"></i></small>
+                                        {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <button id="today-button" class="btn btn-info">
+                <i class="fas fa-calendar-day me-2"></i> Перейти к текущему месяцу
+            </button>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Кнопки навигации
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            const todayBtn = document.getElementById('today-button');
+            
+            // Селекторы месяца и года
+            const monthSelect = document.getElementById('month');
+            const yearSelect = document.getElementById('year');
+            
+            // Обработчик для кнопки "Предыдущий месяц"
+            prevMonthBtn.addEventListener('click', function() {
+                let month = parseInt(monthSelect.value);
+                let year = parseInt(yearSelect.value);
+                
+                month--;
+                if (month < 1) {
+                    month = 12;
+                    year--;
+                }
+                
+                monthSelect.value = month;
+                yearSelect.value = year;
+                document.getElementById('date-form').submit();
+            });
+            
+            // Обработчик для кнопки "Следующий месяц"
+            nextMonthBtn.addEventListener('click', function() {
+                let month = parseInt(monthSelect.value);
+                let year = parseInt(yearSelect.value);
+                
+                month++;
+                if (month > 12) {
+                    month = 1;
+                    year++;
+                }
+                
+                monthSelect.value = month;
+                yearSelect.value = year;
+                document.getElementById('date-form').submit();
+            });
+            
+            // Обработчик для кнопки "Перейти к текущему месяцу"
+            todayBtn.addEventListener('click', function() {
+                const today = new Date();
+                monthSelect.value = today.getMonth() + 1;
+                yearSelect.value = today.getFullYear();
+                document.getElementById('date-form').submit();
+            });
+        });
+    </script>
+</body>
+</html> 
