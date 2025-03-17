@@ -1,0 +1,30 @@
+name: Deploy to Remote VM
+
+on:
+  push:
+    branches:
+      - main  # Измените на вашу основную ветку
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          ssh-keyscan 91.107.121.133 >> ~/.ssh/known_hosts
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@91.107.121.133 "
+            cd /path/to/your/project &&
+            git pull origin main &&
+            docker-compose down &&
+            docker-compose up -d --build
+          " 
