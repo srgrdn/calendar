@@ -3,8 +3,7 @@ name: Deploy to Remote VM
 on:
   push:
     branches:
-      - main  # Измените на вашу основную ветку
-
+      - main
 jobs:
   deploy:
     runs-on: ubuntu-latest

@@ -68,7 +68,8 @@ def index():
         selected_year=selected_year,
         months=months,
         years=years,
-        start_date=start_date
+        start_date=start_date,
+        now=datetime.datetime.now()
     )
 
 
