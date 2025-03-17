@@ -18,11 +18,11 @@ jobs:
           mkdir -p ~/.ssh/
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
-          ssh-keyscan 91.107.121.133 >> ~/.ssh/known_hosts
+          ssh-keyscan -p 2233 -H 91.107.121.133 >> ~/.ssh/known_hosts
 
       - name: Deploy with Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@91.107.121.133 "
+          ssh -o StrictHostKeyChecking=no -p 2233 ubuntu@91.107.121.133 "
             cd /path/to/your/project &&
             git pull origin main &&
             docker-compose down &&
