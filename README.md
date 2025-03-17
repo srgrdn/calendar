@@ -52,7 +52,7 @@
 3. Откройте браузер и перейдите по адресу: http://localhost или http://ваш_ip_адрес
 
 ## Структура проекта 
-
+```bash
 work-schedule-calendar/
 ├── app.py                  # Основной файл приложения Flask
 ├── requirements.txt        # Зависимости Python
@@ -69,3 +69,4 @@ work-schedule-calendar/
     ├── nginx.conf          # Основная конфигурация Nginx
     └── conf.d/             # Дополнительные конфигурации
         └── app.conf        # Конфигурация для приложения 
+```
