@@ -1,11 +1,112 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import calendar
 import datetime
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from models import db, User
+from config import Config
 
 app = Flask(__name__)
+app.config.from_object(Config)
+
+db.init_app(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Пожалуйста, войдите для доступа к этой странице.'
+login_manager.login_message_category = 'info'
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        remember = True if request.form.get('remember') else False
+
+        user = User.query.filter_by(username=username).first()
+
+        if not user or not user.check_password(password):
+            flash('Неверное имя пользователя или пароль', 'danger')
+            return render_template('login.html')
+
+        user.last_login = datetime.datetime.utcnow()
+        db.session.commit()
+
+        login_user(user, remember=remember)
+
+        session.permanent = True
+
+        next_page = request.args.get('next')
+        if not next_page or not next_page.startswith('/'):
+            next_page = url_for('index')
+
+        flash('Вы успешно вошли в систему!', 'success')
+        return redirect(next_page)
+
+    return render_template('login.html')
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        if password != confirm_password:
+            flash('Пароли не совпадают', 'danger')
+            return render_template('register.html')
+
+        user_by_username = User.query.filter_by(username=username).first()
+        if user_by_username:
+            flash('Имя пользователя уже занято', 'danger')
+            return render_template('register.html')
+
+        user_by_email = User.query.filter_by(email=email).first()
+        if user_by_email:
+            flash('Email уже используется', 'danger')
+            return render_template('register.html')
+
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Регистрация успешна! Теперь вы можете войти.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Вы вышли из системы', 'info')
+    return redirect(url_for('login'))
 
 
 @app.route('/')
+@login_required
 def index():
     start_date = datetime.date(2025, 3, 17)
     today = datetime.date.today()
@@ -69,7 +170,8 @@ def index():
         months=months,
         years=years,
         start_date=start_date,
-        now=datetime.datetime.now()
+        now=datetime.datetime.now(),
+        user=current_user
     )
 
 

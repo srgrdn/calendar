@@ -123,10 +123,66 @@
             padding: 1rem 0;
             margin-top: 2rem;
         }
+        /* User info */
+        .user-info {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .user-info .dropdown-menu {
+            min-width: 200px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #6c757d;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container calendar-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="user-info">
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="user-avatar">
+                        {{ user.username[0].upper() }}
+                    </div>
+                    <span>{{ user.username }}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li class="dropdown-item-text">
+                        <strong>{{ user.username }}</strong><br>
+                        <small class="text-muted">{{ user.email }}</small>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Выйти</a></li>
+                </ul>
+            </div>
+        </div>
+
         <div class="text-center header-title">
             <h1 class="display-4">Календарь графика работы Булки</h1>
             <p class="lead text-muted">Начало цикла: {{ start_date.strftime('%d.%m.%Y') }}</p>
@@ -209,11 +265,6 @@
                                     <td class="{{ day.status }} {% if day.today %}today{% endif %}">
                                         {% if day.day %}
                                         <div class="day-number">{{ day.day }}</div>
-                                        {% if day.status == "work" %}
-                                        <small><i class="fas fa-briefcase"></i></small>
-                                        {% elif day.status == "off" %}
-                                        <small><i class="fas fa-home"></i></small>
-                                        {% endif %}
                                         {% endif %}
                                     </td>
                                     {% endfor %}
@@ -236,27 +287,17 @@
     
     <!-- Подвал -->
     <footer class="footer">
-        Design by Bulka © {{ now.year }}
+        Design by Bulka {{ now.year }}
     </footer>
     
-    <!-- Bootstrap JS Bundle with Popper -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Кнопки навигации
-            const prevMonthBtn = document.getElementById('prev-month');
-            const nextMonthBtn = document.getElementById('next-month');
-            const todayBtn = document.getElementById('today-button');
-            
-            // Селекторы месяца и года
-            const monthSelect = document.getElementById('month');
-            const yearSelect = document.getElementById('year');
-            
-            // Обработчик для кнопки "Предыдущий месяц"
-            prevMonthBtn.addEventListener('click', function() {
-                let month = parseInt(monthSelect.value);
-                let year = parseInt(yearSelect.value);
+            // Кнопка "Предыдущий месяц"
+            document.getElementById('prev-month').addEventListener('click', function() {
+                let month = parseInt(document.getElementById('month').value);
+                let year = parseInt(document.getElementById('year').value);
                 
                 month--;
                 if (month < 1) {
@@ -264,15 +305,15 @@
                     year--;
                 }
                 
-                monthSelect.value = month;
-                yearSelect.value = year;
+                document.getElementById('month').value = month;
+                document.getElementById('year').value = year;
                 document.getElementById('date-form').submit();
             });
             
-            // Обработчик для кнопки "Следующий месяц"
-            nextMonthBtn.addEventListener('click', function() {
-                let month = parseInt(monthSelect.value);
-                let year = parseInt(yearSelect.value);
+            // Кнопка "Следующий месяц"
+            document.getElementById('next-month').addEventListener('click', function() {
+                let month = parseInt(document.getElementById('month').value);
+                let year = parseInt(document.getElementById('year').value);
                 
                 month++;
                 if (month > 12) {
@@ -280,19 +321,22 @@
                     year++;
                 }
                 
-                monthSelect.value = month;
-                yearSelect.value = year;
+                document.getElementById('month').value = month;
+                document.getElementById('year').value = year;
                 document.getElementById('date-form').submit();
             });
             
-            // Обработчик для кнопки "Перейти к текущему месяцу"
-            todayBtn.addEventListener('click', function() {
+            // Кнопка "Перейти к текущему месяцу"
+            document.getElementById('today-button').addEventListener('click', function() {
                 const today = new Date();
-                monthSelect.value = today.getMonth() + 1;
-                yearSelect.value = today.getFullYear();
+                const currentMonth = today.getMonth() + 1; // JavaScript месяцы начинаются с 0
+                const currentYear = today.getFullYear();
+                
+                document.getElementById('month').value = currentMonth;
+                document.getElementById('year').value = currentYear;
                 document.getElementById('date-form').submit();
             });
         });
     </script>
 </body>
-</html> 
+</html>
