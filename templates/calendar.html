@@ -265,6 +265,11 @@
                                     <td class="{{ day.status }} {% if day.today %}today{% endif %}">
                                         {% if day.day %}
                                         <div class="day-number">{{ day.day }}</div>
+                                        {% if day.status == "work" %}
+                                        <small><i class="fas fa-briefcase"></i></small>
+                                        {% elif day.status == "off" %}
+                                        <small><i class="fas fa-home"></i></small>
+                                        {% endif %}
                                         {% endif %}
                                     </td>
                                     {% endfor %}
