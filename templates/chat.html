@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мур-чат</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 2rem;
+        }
+        .chat-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            background-color: #e9ecef;
+        }
+        .message .sender {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .message .time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .user-list {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .user-item {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .user-item:hover {
+            background-color: #e9ecef;
+        }
+        .user-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .navbar {
+            margin-bottom: 2rem;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-calendar-alt me-2"></i>Календарь Булки
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Календарь</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('chat') }}">Мур-чат</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-2"></i>{{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Выйти</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container chat-container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="user-list">
+                    <h5 class="mb-3">Пользователи</h5>
+                    {% for user in users %}
+                    <div class="user-item" data-user-id="{{ user.id }}">
+                        {{ user.username }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="chat-box" id="chatBox"></div>
+                <button class="btn btn-primary w-100" id="sendMur" disabled>
+                    Отправить МУР
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let selectedUserId = null;
+            const chatBox = document.getElementById('chatBox');
+            const sendMurBtn = document.getElementById('sendMur');
+            const userItems = document.querySelectorAll('.user-item');
+
+            function loadMessages(userId) {
+                fetch(`/get_messages/${userId}`)
+                    .then(response => response.json())
+                    .then(messages => {
+                        chatBox.innerHTML = '';
+                        messages.forEach(message => {
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = 'message';
+                            messageDiv.innerHTML = `
+                                <div class="sender">${message.sender}</div>
+                                <div>мур</div>
+                                <div class="time">${message.timestamp}</div>
+                            `;
+                            chatBox.appendChild(messageDiv);
+                        });
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    });
+            }
+
+            userItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    userItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedUserId = this.dataset.userId;
+                    sendMurBtn.disabled = false;
+                    loadMessages(selectedUserId);
+                });
+            });
+
+            sendMurBtn.addEventListener('click', function() {
+                if (!selectedUserId) return;
+
+                const formData = new FormData();
+                formData.append('recipient_id', selectedUserId);
+
+                fetch('/send_mur', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadMessages(selectedUserId);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

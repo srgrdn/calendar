@@ -1,14 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 import calendar
 import datetime
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User
+from models import db, User, Message
 from config import Config
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -173,6 +175,49 @@ def index():
         now=datetime.datetime.now(),
         user=current_user
     )
+
+
+@app.route('/chat')
+@login_required
+def chat():
+    users = User.query.filter(User.id != current_user.id).all()
+    return render_template('chat.html', users=users)
+
+
+@app.route('/send_mur', methods=['POST'])
+@login_required
+def send_mur():
+    recipient_id = request.form.get('recipient_id')
+    if not recipient_id:
+        return jsonify({'error': 'Получатель не выбран'}), 400
+
+    recipient = User.query.get(recipient_id)
+    if not recipient:
+        return jsonify({'error': 'Получатель не найден'}), 404
+
+    message = Message(sender_id=current_user.id, recipient_id=recipient.id)
+    db.session.add(message)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'sender': current_user.username,
+        'timestamp': message.timestamp.strftime('%H:%M:%S')
+    })
+
+
+@app.route('/get_messages/<int:user_id>')
+@login_required
+def get_messages(user_id):
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.id) & (Message.recipient_id == user_id)) |
+        ((Message.sender_id == user_id) & (Message.recipient_id == current_user.id))
+    ).order_by(Message.timestamp.desc()).limit(50).all()
+
+    return jsonify([{
+        'sender': message.sender.username,
+        'timestamp': message.timestamp.strftime('%H:%M:%S')
+    } for message in messages])
 
 
 if __name__ == '__main__':
