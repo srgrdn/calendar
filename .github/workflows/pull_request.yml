@@ -34,9 +34,9 @@ jobs:
         run: |
           python run_tests.py
 
-          - name: Run tests with coverage
-          run: |
-            python run_tests_with_coverage.py
+      - name: Run tests with coverage
+        run: |
+          python run_tests_with_coverage.py
         
       - name: Debug coverage directory
         run: |
