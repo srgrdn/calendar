@@ -14,6 +14,7 @@
 - **Backend**: Python, Flask
 - **Frontend**: HTML, CSS, JavaScript, Bootstrap 5, Font Awesome
 - **Инфраструктура**: Docker, Nginx, Gunicorn
+- **CI/CD**: GitHub Actions, Flake8, Coverage
 
 ## Требования
 
@@ -43,6 +44,21 @@
    ```bash
    mkdir -p nginx/conf.d nginx/logs static
    ```
+
+## Непрерывная интеграция (CI/CD)
+
+В проекте настроен автоматический процесс CI/CD с использованием GitHub Actions:
+
+- При создании Pull Request запускаются автоматические проверки:
+  - Линтинг кода (Flake8)
+  - Запуск всех тестов
+  - Анализ покрытия кода тестами
+
+- Статус проверок отображается в Pull Request, что позволяет определить, можно ли мержить изменения
+
+- После мержа в ветку `main` происходит автоматический деплой на сервер
+
+Подробное руководство по CI/CD процессу доступно в файле [CI_CD_README.md](CI_CD_README.md).
 
 2. Запустите приложение в продакшн-режиме:
    ```bash
