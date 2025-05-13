@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=testing
+      - SQLALCHEMY_DATABASE_URI=sqlite:///:memory:
+    command: >
+      bash -c "pip install pytest pytest-flask selenium coverage &&
+               python run_tests.py &&
+               python run_tests_with_coverage.py &&
+               pytest test_pytest.py -v"
+
+  selenium-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    depends_on:
+      - selenium-chrome
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=testing
+      - SELENIUM_DRIVER_URL=http://selenium-chrome:4444/wd/hub
+    command: >
+      bash -c "pip install selenium &&
+               python -c 'import time; time.sleep(5)' &&
+               python functional_tests.py"
+
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    ports:
+      - "4444:4444"
