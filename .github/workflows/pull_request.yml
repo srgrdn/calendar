@@ -34,10 +34,15 @@ jobs:
         run: |
           python run_tests.py
 
-      - name: Run tests with coverage
+          - name: Run tests with coverage
+          run: |
+            python run_tests_with_coverage.py
+        
+      - name: Debug coverage directory
         run: |
-          python run_tests_with_coverage.py
-          
+          ls -la coverage_html/
+        continue-on-error: true
+      
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:

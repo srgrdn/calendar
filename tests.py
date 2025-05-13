@@ -91,7 +91,7 @@ class AuthTestCase(BaseTestCase):
             'username': 'testuser',
             'password': 'password123',
         }, follow_redirects=True)
-        
+
         # Затем выходим
         response = self.app.get('/logout', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
@@ -106,29 +106,29 @@ class CalendarTestCase(BaseTestCase):
             'username': 'testuser',
             'password': 'password123',
         }, follow_redirects=True)
-        
+
         # Проверяем отображение календаря
         response = self.app.get('/')
         self.assertEqual(response.status_code, 200)
-        
+
         # Проверяем, что календарь содержит нужные элементы
         self.assertIn(b'calendar-container', response.data)
-        
+
         # Проверяем расчет рабочих дней для конкретной даты
         start_date = datetime.date(2025, 3, 17)  # Начальная дата цикла
         test_date = datetime.date(2025, 3, 18)  # Второй день цикла (рабочий)
-        
+
         days_diff = (test_date - start_date).days
         cycle_position = days_diff % 4
-        
+
         # Проверяем, что это рабочий день (первые 2 дня цикла)
         self.assertTrue(cycle_position < 2)
-        
+
         # Проверяем выходной день
         test_date = datetime.date(2025, 3, 19)  # Третий день цикла (выходной)
         days_diff = (test_date - start_date).days
         cycle_position = days_diff % 4
-        
+
         # Проверяем, что это выходной день (последние 2 дня цикла)
         self.assertTrue(cycle_position >= 2)
 
@@ -139,7 +139,7 @@ class CalendarTestCase(BaseTestCase):
             'username': 'testuser',
             'password': 'password123',
         }, follow_redirects=True)
-        
+
         # Проверяем переход на другой месяц
         response = self.app.get('/?month=5&year=2025')
         self.assertEqual(response.status_code, 200)
@@ -155,20 +155,20 @@ class MessageTestCase(BaseTestCase):
             'username': 'testuser',
             'password': 'password123',
         }, follow_redirects=True)
-        
+
         # Получаем ID второго пользователя
         with app.app_context():
             recipient = User.query.filter_by(username='testuser2').first()
             recipient_id = recipient.id
-        
+
         # Отправляем сообщение
         response = self.app.post('/send_mur', data={
             'recipient_id': recipient_id
         })
-        
+
         # Проверяем успешность отправки
         self.assertEqual(response.status_code, 200)
-        
+
         # Проверяем, что сообщение создано в базе
         with app.app_context():
             message = Message.query.filter_by(
@@ -199,12 +199,12 @@ class ModelTestCase(unittest.TestCase):
             user.set_password('password123')
             db.session.add(user)
             db.session.commit()
-            
+
             # Проверяем, что пользователь создан
             user = User.query.filter_by(username='testuser').first()
             self.assertIsNotNone(user)
             self.assertEqual(user.email, 'test@example.com')
-            
+
             # Проверяем проверку пароля
             self.assertTrue(user.check_password('password123'))
             self.assertFalse(user.check_password('wrongpassword'))
@@ -220,12 +220,12 @@ class ModelTestCase(unittest.TestCase):
             db.session.add(user1)
             db.session.add(user2)
             db.session.commit()
-            
+
             # Создаем сообщение
             message = Message(sender_id=user1.id, recipient_id=user2.id)
             db.session.add(message)
             db.session.commit()
-            
+
             # Проверяем, что сообщение создано
             message = Message.query.first()
             self.assertIsNotNone(message)
